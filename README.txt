@@ -1,0 +1,6 @@
+- In main, with FastAPI I displayed the data in JSON format after loading the CSV file comments.csv
+- In process.py I call the API http://127.0.0.1:8000/comments to retrieve the JSON output using the requests library
+- In process.py I refine and sanitize the information obtained from the API using pandas DataFrames
+- In process.py I begin splitting the cleaned DataFrame into segments with a chunk size of 30
+- In process.py I utilize sqlite3 to set up the database chunks.db, create the table if it does not already exist, and insert the generated segments from the earlier step
+- In process.py I run an sqlite3 query to fetch all segments that contain the word “python”
