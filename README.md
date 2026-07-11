@@ -1,3 +1,7 @@
+![Python](https://img.shields.io/badge/Python-3.x-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)
+![SQLite](https://img.shields.io/badge/Database-SQLite-lightgrey)
+
 # FastAPI Comments API
 
 A simple REST API built with **FastAPI** that reads comments from a CSV file and returns them as JSON data.
