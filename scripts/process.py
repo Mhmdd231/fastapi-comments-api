@@ -58,45 +58,108 @@ def query_chunks_containing_python():
     return [{"chunk_text": r[0], "comment_id": r[1]} for r in rows]
 
 def main():
+    print("Starting comment processing pipeline...")
+
+    # Get comments from FastAPI
     resp = requests.get(API_URL, timeout=10)
     resp.raise_for_status()
+
     data = resp.json()
     comments = data.get("comments", [])
+
+    print(f"Total comments received: {len(comments)}")
+
     df = pd.DataFrame(comments)
+
     if df.empty:
         print("No comments returned from API.")
         return
+
     required_cols = {"id", "email", "body"}
+
     if not required_cols.issubset(set(df.columns)):
         raise ValueError("JSON missing required columns")
-    df["body_word_count"] = df["body"].astype(str).apply(count_words)
+
+    # Count words
+    df["body_word_count"] = (
+        df["body"]
+        .astype(str)
+        .apply(count_words)
+    )
+
+    # Count .org emails
+    org_count = (
+        df["email"]
+        .astype(str)
+        .str.endswith(".org")
+        .sum()
+    )
+
+    print(f".org emails found: {org_count}")
+
+    # Filter comments
     filtered_df = df[
         df["email"].astype(str).str.endswith(".org")
         & (df["body_word_count"] > 20)
     ].copy()
+
+    print(
+        f"Comments passing filters: {len(filtered_df)}"
+    )
+
     if filtered_df.empty:
-        print("No rows matched filtering criteria (.org emails and >20 words).")
+        print("No rows matched filtering criteria.")
         return
-    filtered_df["clean_body"] = filtered_df["body"].astype(str).apply(clean_text)
+
+    # Clean text
+    filtered_df["clean_body"] = (
+        filtered_df["body"]
+        .astype(str)
+        .apply(clean_text)
+    )
+
     all_chunks = []
+
     for _, row in filtered_df.iterrows():
+
         comment_id = int(row["id"])
-        chunks = chunk_text(row["clean_body"], chunk_size=30)
+
+        chunks = chunk_text(
+            row["clean_body"],
+            chunk_size=30
+        )
+
         for ch in chunks:
-            all_chunks.append({"comment_id": comment_id, "chunk_text": ch})
+            all_chunks.append(
+                {
+                    "comment_id": comment_id,
+                    "chunk_text": ch
+                }
+            )
+
     if not all_chunks:
-        print("No chunks produced after cleaning and chunking.")
+        print("No chunks produced.")
         return
+
+    print(f"Chunks created: {len(all_chunks)}")
+
+    # Save to SQLite
     ensure_database()
     insert_chunks(all_chunks)
-    print(f"Inserted {len(all_chunks)} chunks into {DB_PATH}")
-    results = query_chunks_containing_python()
-    if not results:
-        print("No chunks found containing the word 'python'.")
-    else:
-        print("\nChunks containing 'python':")
-        for item in results:
-            print(f"- Comment ID: {item['comment_id']} | Chunk: {item['chunk_text']}")
 
+    print(f"Inserted data into: {DB_PATH}")
+
+    # Search example
+    results = query_chunks_containing_python()
+
+    print(
+        f"Chunks containing 'python': {len(results)}"
+    )
+
+    for item in results:
+        print(
+            f"- Comment ID: {item['comment_id']} | "
+            f"Chunk: {item['chunk_text']}"
+        )
 if __name__ == "__main__":
     main()
