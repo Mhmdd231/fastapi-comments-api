@@ -61,7 +61,7 @@ def main():
     resp = requests.get(API_URL, timeout=10)
     resp.raise_for_status()
     data = resp.json()
-    comments = data.get("items", [])
+    comments = data.get("comments", [])
     df = pd.DataFrame(comments)
     if df.empty:
         print("No comments returned from API.")
