@@ -85,6 +85,12 @@ http://127.0.0.1:8000
 
 FastAPI automatically generates interactive documentation.
 
+## Screenshots
+
+### Swagger API Documentation
+
+![Swagger Documentation](screenshots/swagger.png)
+
 ## Swagger UI
 
 Open:
